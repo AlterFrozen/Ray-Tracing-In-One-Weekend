@@ -1,0 +1,27 @@
+﻿  main.cpp
+C:\Users\26692\source\repos\RayTracingInOneWeekend\RayTracingInOneWeekend\objects.hpp(33,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\26692\source\repos\RayTracingInOneWeekend\RayTracingInOneWeekend\objects.hpp(40,15): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\26692\source\repos\RayTracingInOneWeekend\RayTracingInOneWeekend\objects.hpp(43,38): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\26692\source\repos\RayTracingInOneWeekend\RayTracingInOneWeekend\main.cpp(59,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\include\xutility(149,77): warning C4244: 'argument': conversion from '_Ty' to 'float', possible loss of data
+          with
+          [
+              _Ty=double
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\include\memory(2010): message : see reference to function template instantiation 'void std::_Construct_in_place<_Ty,glm::vec<3,float,glm::packed_highp>,double,glm::vec<3,float,glm::packed_highp>>(_Ty &,glm::vec<3,float,glm::packed_highp> &&,double &&,glm::vec<3,float,glm::packed_highp> &&) noexcept(false)' being compiled
+          with
+          [
+              _Ty=Sphere
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\include\memory(2729): message : see reference to function template instantiation 'std::_Ref_count_obj2<Sphere>::_Ref_count_obj2<_Ty,double,_Ty>(_Ty &&,double &&,_Ty &&)' being compiled
+          with
+          [
+              _Ty=glm::vec3
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\include\memory(2730): message : see reference to function template instantiation 'std::_Ref_count_obj2<Sphere>::_Ref_count_obj2<_Ty,double,_Ty>(_Ty &&,double &&,_Ty &&)' being compiled
+          with
+          [
+              _Ty=glm::vec3
+          ]
+C:\Users\26692\source\repos\RayTracingInOneWeekend\RayTracingInOneWeekend\main.cpp(44): message : see reference to function template instantiation 'std::shared_ptr<Sphere> std::make_shared<Sphere,glm::vec3,double,glm::vec3>(glm::vec3 &&,double &&,glm::vec3 &&)' being compiled
+  RayTracingInOneWeekend.vcxproj -> C:\Users\26692\source\repos\RayTracingInOneWeekend\x64\Debug\RayTracingInOneWeekend.exe

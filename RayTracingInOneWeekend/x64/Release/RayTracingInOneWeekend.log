@@ -1,0 +1,8 @@
+﻿  main.cpp
+C:\Users\26692\source\repos\RayTracingInOneWeekend\RayTracingInOneWeekend\main.cpp(20,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+  Generating code
+  6 of 322 functions ( 1.9%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    11 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  RayTracingInOneWeekend.vcxproj -> C:\Users\26692\source\repos\RayTracingInOneWeekend\x64\Release\RayTracingInOneWeekend.exe
