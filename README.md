@@ -1,3 +1,3 @@
 # Ray TracingIn One Weekend
 
-![](./RayTracingInOneWeekend/result.ppm)
+![](./RayTracingInOneWeekend/result.png)
