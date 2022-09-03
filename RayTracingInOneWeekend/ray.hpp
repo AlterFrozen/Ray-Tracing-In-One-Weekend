@@ -1,7 +1,12 @@
 #pragma once
 
+#include <memory>
+
 #include "glm/glm.hpp"
 
+#include "materials.hpp"
+
+class Material;
 class Ray
 {
 public:
@@ -10,9 +15,10 @@ public:
 		float hit_time_first = std::numeric_limits<float>::max();
 		glm::vec3 hit_point;
 		glm::vec3 hit_point_normal;
+		std::weak_ptr<Material> hit_object_material;
 	};
 
-	Ray() = delete;
+	Ray() = default;
 	Ray(const glm::vec3& origin, const glm::vec3& direction) :_origin{ origin }, _direction{ direction }, _hitInfo{} {};
 
 	glm::vec3 cast(float t) const { return _origin + t * _direction; }
