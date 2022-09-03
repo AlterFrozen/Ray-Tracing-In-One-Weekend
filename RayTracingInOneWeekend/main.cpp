@@ -91,7 +91,7 @@ private: //helper
 		return (1.0f - t) * glm::vec3(1.0, 1.0, 1.0) + t * glm::vec3(0.5, 0.7, 1.0);
 	}
 private:
-	Picture pic{ 200, 100, 3, ppm, "practice" };
+	Picture pic{ 200, 100, 3, ppm, "result" };
 	std::vector<std::shared_ptr<Object>> scene;
 
 	glm::vec3 start_point{ -2.0, -1.0, -1.0 }; // lower_left_corner
