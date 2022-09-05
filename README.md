@@ -2,4 +2,4 @@
 
 ![](./RayTracingInOneWeekend/result.png)
 
-- Refer to the book **Ray Tracing In One Weekend** but reconstruct the code by myself.
+- Refer to the book **Ray Tracing In One Weekend** but reconstruct the code and rewrite some functions by myself.
