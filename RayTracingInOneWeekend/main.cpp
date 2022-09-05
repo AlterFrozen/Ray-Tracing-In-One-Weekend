@@ -30,8 +30,8 @@ public:
 	void execute()
 	{
 		//Scene
-		//initScene();
-		initScene("textbook cover");
+		initScene();
+		//initScene("textbook cover");
 
 		//Sampling
 		//camera.setView(glm::vec3(-2, 2, 1), glm::vec3(0, 0, -1), glm::vec3(0.0, 1.0, 0.0)); // Viewport 1
