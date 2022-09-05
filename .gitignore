@@ -1,4 +1,9 @@
 .vs
+x64
+.ppm
+.vcxproj
+.vcxproj.filters
+.vcxproj.user
 
 # Prerequisites
 *.d
