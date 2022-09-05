@@ -6,98 +6,124 @@
 #include <vector>
 #include <cstdlib>
 #include <random>
+#include <format>
+#include <chrono>
 //3rd Party
 #include "glm/glm.hpp"
 //My Libs
-#include "picture.hpp"
+#include "camera.hpp"
 #include "ray.hpp"
 #include "objects.hpp"
 #include "utils.hpp"
 #include "materials.hpp"
 
+typedef std::chrono::high_resolution_clock Clock;
+
 class RayTracing
 {
+private:
+	const int range_x = 1080, range_y = 720;
+	std::vector<std::shared_ptr<Object>> scene;
+	Camera camera{ range_x, range_y, 3, 90, static_cast<float>(range_x) / static_cast<float>(range_y), ppm, "result" , scene };
+	Clock::time_point time_execute_start = Clock::now();
 public:
 	void execute()
 	{
-		//Init
-		//pic.defaultPicture();
-		int width = pic.width();
-		int height = pic.height();
-		static std::default_random_engine defaultRandomEngine;
-		static std::uniform_real_distribution<float> ufDistribution(0.0, 1.0 - std::numeric_limits<float>::epsilon());
 		//Scene
-		initScene();
+		//initScene();
+		initScene("textbook cover");
 
 		//Sampling
-		for (int row = height - 1; row >= 0; --row)
-		{
-			for (int col = 0; col < width; ++col)
-			{
-				//MSAA
-				const int msaa_times = 1000;
-				glm::vec3 color(0.0, 0.0, 0.0);
-				for (int msaa_iter = 0; msaa_iter < msaa_times; ++msaa_iter)
-				{
-					float randX = ufDistribution(defaultRandomEngine);
-					float randY = ufDistribution(defaultRandomEngine);
-					float offset_x = (static_cast<float>(col) + randX) / static_cast<float>(width);
-					float offset_y = (static_cast<float>(row) + randY) / static_cast<float>(height);
-					
-					Ray ray(origin, start_point + offset_x * horizontal + offset_y * vertical);
-					color += calculateColor(ray, 0);
-				}
-				color /= static_cast<float>(msaa_times);
-
-				gamma_correction(color);
-				pic.write(height - (row + 1), col, color);
-			}
-		}// end traverse picture
+		//camera.setView(glm::vec3(-2, 2, 1), glm::vec3(0, 0, -1), glm::vec3(0.0, 1.0, 0.0)); // Viewport 1
+		camera.setMSAA(1000);
+		camera.shoot(0.999); // 0.999 ¡Ö 50times 0.999999 ¡Ö 100times
 	}
 
 private: //helper
-	void initScene()
+	void initScene(std::string name = "")
 	{
 		//Spheres
 		glm::vec3 defaultColor(0.5, 0.5, 0.0);
-		this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(0.0, 0.0, -1.0), 0.5, defaultColor, std::make_shared<Lambertian>(glm::vec3(0.8, 0.3, 0.3))));
-		this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(0.0, -100.5, -1.0), 100.0, defaultColor, std::make_shared<Lambertian>(glm::vec3(0.8, 0.8, 0.0))));
-		this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(1.0, 0.0, -1.0), 0.5, defaultColor, std::make_shared<Metal>(glm::vec3(0.8, 0.6, 0.2))));
-		this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(-1.0, -0.0, -1.0), 0.5, defaultColor, std::make_shared<Metal>(glm::vec3(0.8, 0.8, 0.8))));
-	}
-
-	glm::vec3 calculateColor(Ray& ray, int iterationDepth)
-	{
-		if (iterationDepth > 50) return glm::vec3(0.0, 0.0, 0.0);
-
-		bool intersected = false;
-		for (auto& object : this->scene)
+		
+		if (name.empty()) //default
 		{
-			intersected |= object->intersectionTest(ray, 0.0f, std::numeric_limits<float>::max());
+			std::cout << "[Scene]  Default Scene\n";
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(0.0, 0.0, -1.0), 0.5, defaultColor, std::make_shared<Lambertian>(glm::vec3(0.1, 0.2, 0.5))));
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(0.0, -100.5, -1.0), 100.0, defaultColor, std::make_shared<Lambertian>(glm::vec3(0.8, 0.8, 0.0))));
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(1.0, 0.0, -1.0), 0.5, defaultColor, std::make_shared<Metal>(glm::vec3(0.8, 0.6, 0.2))));
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(-1.0, 0.0, -1.0), 0.5, defaultColor, std::make_shared<Dielectric>(1.5f)));
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(-1.0, 0.0, -1.0), -0.45, defaultColor, std::make_shared<Dielectric>(1.5f))); // Hollow
 		}
-
-		if (intersected)
+		else if (name == "two balls")
 		{
-			//return (ray.hitInfo().hit_point_normal + 1.0f) * 0.5f;//object->color; // Visualize Normal
-			glm::vec3 attenuation;
-			Ray ray_scattered{};
-			if (ray.hitInfo().hit_object_material.lock()->scatter(ray, ray_scattered, attenuation))
-				return attenuation * calculateColor(ray_scattered, iterationDepth + 1);
+			std::cout << "[Scene] Two Balls\n";
+			float R = cos(glm::pi<float>() / 4.0);
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(-R, 0.0, -1.0), R, defaultColor, std::make_shared<Lambertian>(glm::vec3(0, 0, 1))));
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(R, 0.0, -1.0), R, defaultColor, std::make_shared<Lambertian>(glm::vec3(1, 0, 0))));
 		}
+		else if (name == "textbook cover")
+		{
+			std::cout << "[Scene] Textbook Cover\n";
+			glm::vec3 lookFrom(13, 2, 3);
+			glm::vec3 lookAt(0, 0, 0);
+			//camera.setLens(2.0, glm::length(lookFrom - lookAt));
+			camera.setView(lookFrom, lookAt, glm::vec3(0.0, 1.0, 0.0), 20);
 
-		// Background
-		glm::vec3 normalizedDir = glm::normalize(ray.direction());
-		float t = 0.5 * (normalizedDir.y + 1.0); // -1.0 <= range(y) <= 1.0
-		return (1.0f - t) * glm::vec3(1.0, 1.0, 1.0) + t * glm::vec3(0.5, 0.7, 1.0);
+			std::default_random_engine e((Clock::now() - time_execute_start).count());
+			std::uniform_real_distribution<float> dist(0.0, 1.0);
+
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(0.0, -1000, 0.0), 1000, defaultColor, std::make_shared<Lambertian>(glm::vec3(0.5, 0.5, 0.5))));
+
+			for (int a = -11; a < 11; ++a)
+			{
+				for (int b = -11; b < 11; ++b)
+				{
+					float choose = dist(e);
+					glm::vec3 center(a + 0.9 * dist(e), 0.2, b + 0.9 * dist(e));
+					if ((center - glm::vec3(4.0, 2.0, 0.0)).length() > 0.9)
+					{
+						if (choose < 0.8) // diffuse
+						{
+							this->scene.emplace_back(std::make_shared<Sphere>(center, 0.2, defaultColor, 
+								std::make_shared<Lambertian>(glm::vec3(dist(e) * dist(e), dist(e) * dist(e), dist(e) * dist(e)))));
+						}
+						else if (choose < 0.95) // metal
+						{
+							this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(1.0, 0.0, -1.0), 0.2, defaultColor, 
+								std::make_shared<Metal>(glm::vec3(0.5 * (1 + dist(e)), 0.5 * (1 + dist(e)), 0.5 *  dist(e)))));
+						}
+						else // glass
+						{
+							this->scene.emplace_back(std::make_shared<Sphere>(center, 0.2, defaultColor,
+								std::make_shared<Dielectric>(1.5f)));
+						}
+					}
+				}
+			}
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(-4, 1, 0), 1.0, defaultColor,
+				std::make_shared<Lambertian>(glm::vec3(0.2, 0.2, 0.7))));
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(4, 1, 0), 1.0, defaultColor,
+				std::make_shared<Metal>(glm::vec3(0.7, 0.7, 0.7))));
+			this->scene.back().get()->material.get()->fuzz = 0.01;
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 1, 0), 1.0, defaultColor,
+				std::make_shared<Dielectric>(1.5f)));
+		}// end texture book
+		else if (name == "defocused default scene")
+		{
+			std::cout << "[Scene]  Defocused Default Scene\n";
+			glm::vec3 lookFrom = glm::vec3(3, 3, 2);
+			glm::vec3 lookAt = glm::vec3(0, 0, -1);
+			camera.setLens(0.1, glm::length(lookFrom - lookAt));
+			camera.setView(lookFrom, lookAt, glm::vec3(0.0, 1.0, 0.0), 20);
+
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(0.0, 0.0, -1.0), 0.5, defaultColor, std::make_shared<Lambertian>(glm::vec3(0.1, 0.2, 0.5))));
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(0.0, -100.5, -1.0), 100.0, defaultColor, std::make_shared<Lambertian>(glm::vec3(0.8, 0.8, 0.0))));
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(1.0, 0.0, -1.0), 0.5, defaultColor, std::make_shared<Metal>(glm::vec3(0.8, 0.6, 0.2))));
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(-1.0, 0.0, -1.0), 0.5, defaultColor, std::make_shared<Dielectric>(1.5f)));
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(-1.0, 0.0, -1.0), -0.45, defaultColor, std::make_shared<Dielectric>(1.5f))); // Hollow
+		}
+		else throw std::runtime_error(std::format("No scene named {} !", name));
 	}
-private:
-	Picture pic{ 200, 100, 3, ppm, "result" };
-	std::vector<std::shared_ptr<Object>> scene;
-
-	glm::vec3 start_point{ -2.0, -1.0, -1.0 }; // lower_left_corner
-	glm::vec3 horizontal{ 4.0, 0.0, 0.0 };
-	glm::vec3 vertical{ 0.0, 2.0, 0.0 };
-	glm::vec3 origin{ 0.0, 0.0, 0.0 };
 
 public:
 	static RayTracing& instance()
@@ -108,7 +134,13 @@ public:
 
 private:
 	RayTracing() = default;
-	~RayTracing() { pic.save(); }
+	~RayTracing() 
+	{ 
+		auto duration_s = std::chrono::duration_cast<std::chrono::seconds>(Clock::now() - time_execute_start);
+		std::cout << "Run Time>> " << duration_s.count() << " s\n";
+
+		camera.save(); 
+	}
 };
 
 int main(int argc, char* argv[])

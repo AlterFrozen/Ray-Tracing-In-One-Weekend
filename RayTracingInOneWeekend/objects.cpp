@@ -6,8 +6,8 @@ bool Sphere::intersectionTest(Ray& ray, float t_min, float t_max)
 
 	glm::vec3 oc = ray.origin() - center;
 	float a = glm::dot(ray.direction(), ray.direction());
-	float b = 2.0 * dot(oc, ray.direction());
-	float c = dot(oc, oc) - radius * radius;
+	float b = 2.0 * glm::dot(oc, ray.direction());
+	float c = glm::dot(oc, oc) - radius * radius;
 	float discriminant = (b * b) - (4 * a * c);
 
 	bool isVaildIntersection = false;
@@ -24,7 +24,7 @@ bool Sphere::intersectionTest(Ray& ray, float t_min, float t_max)
 		{
 			ray.hitInfo().hit_time_first = temp;
 			ray.hitInfo().hit_point = ray.cast(ray.hitInfo().hit_time_first);
-			ray.hitInfo().hit_point_normal = glm::normalize(ray.hitInfo().hit_point - this->center);
+			ray.hitInfo().hit_point_normal = (ray.hitInfo().hit_point - this->center) / this->radius;
 			ray.hitInfo().hit_object_material = this->material;
 		}
 	}

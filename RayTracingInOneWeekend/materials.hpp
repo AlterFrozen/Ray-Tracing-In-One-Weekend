@@ -1,5 +1,7 @@
 #pragma once
 
+#include <random>
+
 #include "glm/glm.hpp"
 
 #include "ray.hpp"
@@ -10,7 +12,7 @@ class Ray;
 class Material
 {
 public:
-	typedef enum { SPECULAR, DIFFUSE, TRANSPARENT } MaterialTypes;
+	typedef enum { SPECULAR, DIFFUSE, DIELECTRIC} MaterialTypes;
 	Material() = delete;
 	Material(MaterialTypes material_type) :material_type{ material_type } {  };
 
@@ -39,4 +41,14 @@ struct Metal // Specular
 	virtual bool scatter(Ray& ray_in, Ray& ray_scatter, glm::vec3& attenuation) const;
 
 	glm::vec3 abedo;
+};
+
+struct Dielectric
+	:public Material
+{
+	Dielectric(float refractive_indice) :refractiveIndice{ refractive_indice }, Material{ DIELECTRIC } {};
+
+	virtual bool scatter(Ray& ray_in, Ray& ray_scatter, glm::vec3& attenuation) const;
+
+	float refractiveIndice = 1.0f; //N(medium) / N(air/vacuum)
 };

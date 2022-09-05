@@ -51,4 +51,13 @@ C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.33.3162
           [
               _Ty=Sphere
           ]
+  materials.cpp
+C:\Users\26692\source\repos\RayTracingInOneWeekend\RayTracingInOneWeekend\materials.cpp(35,26): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  objects.cpp
+C:\Users\26692\source\repos\RayTracingInOneWeekend\RayTracingInOneWeekend\objects.cpp(9,10): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\26692\source\repos\RayTracingInOneWeekend\RayTracingInOneWeekend\objects.cpp(16,14): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\26692\source\repos\RayTracingInOneWeekend\RayTracingInOneWeekend\objects.cpp(19,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  ray.cpp
+  utils.cpp
+  Generating Code...
   RayTracingInOneWeekend.vcxproj -> C:\Users\26692\source\repos\RayTracingInOneWeekend\x64\Debug\RayTracingInOneWeekend.exe

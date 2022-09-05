@@ -24,7 +24,7 @@
     <ClCompile Include="ray.cpp">
       <Filter>Resource Files</Filter>
     </ClCompile>
-    <ClCompile Include="picture.cpp">
+    <ClCompile Include="camera.cpp">
       <Filter>Resource Files</Filter>
     </ClCompile>
     <ClCompile Include="objects.cpp">
@@ -35,7 +35,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="picture.hpp">
+    <ClInclude Include="camera.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ray.hpp">

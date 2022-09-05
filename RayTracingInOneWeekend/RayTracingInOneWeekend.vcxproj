@@ -134,14 +134,14 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="materials.cpp" />
     <ClCompile Include="objects.cpp" />
-    <ClCompile Include="picture.cpp" />
+    <ClCompile Include="camera.cpp" />
     <ClCompile Include="ray.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="materials.hpp" />
     <ClInclude Include="objects.hpp" />
-    <ClInclude Include="picture.hpp" />
+    <ClInclude Include="camera.hpp" />
     <ClInclude Include="ray.hpp" />
     <ClInclude Include="utils.hpp" />
   </ItemGroup>
