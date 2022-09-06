@@ -42,6 +42,7 @@ public:
 private: //helper
 	void initScene(std::string name = "")
 	{
+		this->scene.clear();
 		//Spheres
 		glm::vec3 defaultColor(0.5, 0.5, 0.0);
 		
