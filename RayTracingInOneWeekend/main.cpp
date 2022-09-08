@@ -22,7 +22,7 @@ typedef std::chrono::high_resolution_clock Clock;
 class RayTracing
 {
 private:
-	const int range_x = 1080, range_y = 720;
+	const int range_x = 200, range_y = 100;
 	std::vector<std::shared_ptr<Object>> scene;
 	Camera camera{ range_x, range_y, 3, 90, static_cast<float>(range_x) / static_cast<float>(range_y), ppm, "result" , scene };
 	Clock::time_point time_execute_start = Clock::now();
@@ -30,13 +30,13 @@ public:
 	void execute()
 	{
 		//Scene
-		//initScene();
-		initScene("textbook cover");
+		initScene();
+		//initScene("textbook cover");
 
 		//Sampling
 		//camera.setView(glm::vec3(-2, 2, 1), glm::vec3(0, 0, -1), glm::vec3(0.0, 1.0, 0.0)); // Viewport 1
-		camera.setMSAA(10);
-		camera.shoot(0.999);
+		camera.setMSAA(1000);
+		camera.shoot(0.9);
 	}
 
 private: //helper

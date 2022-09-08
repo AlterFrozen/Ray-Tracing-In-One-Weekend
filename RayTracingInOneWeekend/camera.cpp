@@ -3,6 +3,8 @@
 void Camera::shoot(float rr_prob)
 {
 	this->rr_prob = rr_prob;
+	this->rr_recursion_upper = std::ceil(std::log(0.001) / std::log(rr_prob));
+
 	long long totalSamplingNum = _height * _width * msaa_times / 100;
 	std::cout << "Total Sampling>> " << totalSamplingNum  * 100 << '\n';
 	long long curSamplingNum = 0;
@@ -33,7 +35,7 @@ void Camera::shoot(float rr_prob)
 
 				curSamplingNum++;
 				curProgression = curSamplingNum / totalSamplingNum;
-				if (curProgression - totalProgression >= 1)
+				if (curProgression - totalProgression >= 10)
 				{
 					totalProgression = curProgression;
 					std::cout << "Progressing>> " << totalProgression << std::endl;
@@ -74,7 +76,7 @@ void Camera::setView(glm::vec3 position, glm::vec3 lookAt, glm::vec3 worldUp, fl
 
 glm::vec3 Camera::calculateColor(Ray& ray, unsigned int iter_depth)
 {
-	if (iter_depth > 100) return glm::vec3(0.0, 0.0, 0.0);
+	if (iter_depth > this->rr_recursion_upper) return glm::vec3(0.0, 0.0, 0.0);
 	bool intersected = false;
 	for (auto& object : this->scene)
 	{

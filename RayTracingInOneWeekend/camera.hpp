@@ -70,6 +70,7 @@ private:
 	float focus_dist = 1.0f;
 	//Sampler Range
 	float rr_prob;
+	unsigned int rr_recursion_upper;
 	glm::vec3 rayDir;
 	glm::vec3 right;
 	glm::vec3 cameraUp;
