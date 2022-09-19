@@ -1,3 +1,9 @@
+//#define UNIT_TEST
+
+#ifdef UNIT_TEST
+	#include "unit_test.hpp"
+#endif
+
 //STD
 #include <iostream>
 #include <exception>
@@ -30,7 +36,9 @@ public:
 	void execute()
 	{
 		//Scene
-		initScene();
+		initScene("textbook cover");
+		BVH bvh(this->scene);
+		//camera.bindBVH(std::make_shared<BVH>(this->scene));
 
 		//Sampling
 		camera.setMSAA(100);
@@ -42,7 +50,8 @@ private: //helper
 	{
 		this->scene.clear();
 		//Spheres
-		glm::vec3 defaultColor(0.5, 0.5, 0.0);
+		const glm::vec3 defaultColor(0.5, 0.5, 0.0);
+		const glm::vec3 color_transparent(0.0, 0.0, 0.0);
 		
 		if (name.empty()) //default
 		{
@@ -50,9 +59,56 @@ private: //helper
 			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(0.0, 0.0, -1.0), 0.5, defaultColor, std::make_shared<Lambertian>(glm::vec3(0.1, 0.2, 0.5))));
 			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(0.0, -100.5, -1.0), 100.0, defaultColor, std::make_shared<Lambertian>(glm::vec3(0.8, 0.8, 0.0))));
 			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(1.0, 0.0, -1.0), 0.5, defaultColor, std::make_shared<Metal>(glm::vec3(0.8, 0.6, 0.2))));
-			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(-1.0, 0.0, -1.0), 0.5, defaultColor, std::make_shared<Dielectric>(1.5f)));
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(-1.0, 0.0, -1.0), 0.5, color_transparent, std::make_shared<Dielectric>(1.5f)));
 			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(-1.0, 0.0, -1.0), -0.45, defaultColor, std::make_shared<Dielectric>(1.5f))); // Hollow
 		}
+		else if (name == "textbook cover")
+		{
+			std::cout << "[Scene] Textbook Cover\n";
+			glm::vec3 lookFrom(13, 2, 3);
+			glm::vec3 lookAt(0, 0, 0);
+			//camera.setLens(2.0, glm::length(lookFrom - lookAt));
+			camera.setView(lookFrom, lookAt, glm::vec3(0.0, 1.0, 0.0), 20);
+
+			std::default_random_engine e((Clock::now() - time_execute_start).count());
+			std::uniform_real_distribution<float> dist(0.0, 1.0);
+
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(0.0, -1000, 0.0), 1000, defaultColor, std::make_shared<Lambertian>(glm::vec3(0.5, 0.5, 0.5))));
+
+			for (int a = -11; a < 11; ++a)
+			{
+				for (int b = -11; b < 11; ++b)
+				{
+					float choose = dist(e);
+					glm::vec3 center(a + 0.9 * dist(e), 0.2, b + 0.9 * dist(e));
+					if ((center - glm::vec3(4.0, 2.0, 0.0)).length() > 0.9)
+					{
+						if (choose < 0.8) // diffuse
+						{
+							this->scene.emplace_back(std::make_shared<Sphere>(center, 0.2, defaultColor,
+								std::make_shared<Lambertian>(glm::vec3(dist(e) * dist(e), dist(e) * dist(e), dist(e) * dist(e)))));
+						}
+						else if (choose < 0.95) // metal
+						{
+							this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(1.0, 0.0, -1.0), 0.2, defaultColor,
+								std::make_shared<Metal>(glm::vec3(0.5 * (1 + dist(e)), 0.5 * (1 + dist(e)), 0.5 * dist(e)))));
+						}
+						else // glass
+						{
+							this->scene.emplace_back(std::make_shared<Sphere>(center, 0.2, defaultColor,
+								std::make_shared<Dielectric>(1.5f)));
+						}
+					}
+				}
+			}
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(-4, 1, 0), 1.0, defaultColor,
+				std::make_shared<Lambertian>(glm::vec3(0.2, 0.2, 0.7))));
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(4, 1, 0), 1.0, defaultColor,
+				std::make_shared<Metal>(glm::vec3(0.7, 0.7, 0.7))));
+			this->scene.back().get()->material.get()->fuzz = 0.01;
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 1, 0), 1.0, defaultColor,
+				std::make_shared<Dielectric>(1.5f)));
+		}// end texture book
 		else throw std::runtime_error(std::format("No scene named {} !", name));
 	}
 
@@ -78,7 +134,11 @@ int main(int argc, char* argv[])
 {
 	try 
 	{
+#ifndef UNIT_TEST
 		RayTracing::instance().execute();
+#else
+		UnitTest::execute();
+#endif
 	} 
 	catch(const std::exception& err)
 	{

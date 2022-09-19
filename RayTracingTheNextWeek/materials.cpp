@@ -16,7 +16,7 @@ bool Metal::scatter(Ray& ray_in, Ray& ray_scatter, glm::vec3& attenuation) const
 	attenuation = this->abedo;
 	return (glm::dot(ray_scatter.direction(), ray_in.hitInfo().hit_point_normal) > 0.0f);
 }
-#include <iostream>
+
 bool Dielectric::scatter(Ray& ray_in, Ray& ray_scatter, glm::vec3& attenuation) const
 {
 	glm::vec3 outward_normal;

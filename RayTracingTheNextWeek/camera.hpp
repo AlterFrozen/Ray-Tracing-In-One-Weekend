@@ -13,6 +13,7 @@
 
 #include "ray.hpp"
 #include "objects.hpp"
+#include "BVH.hpp"
 
 typedef enum { ppm } PictureFormats;
 typedef enum { R, G, B, A } ColorChannels;
@@ -45,6 +46,7 @@ public: // Interfaces
 	int width() const { return _width; }
 
 	void shoot(float rr_prob);
+	void bindBVH(std::shared_ptr<BVH> bvh);
 	void setLens(float r_aperture, float focus_dist);
 	void setMSAA(uint32_t rate);
 	void setView(glm::vec3 position, glm::vec3 lookAt, glm::vec3 worldUp, float vFov = -1.0);
@@ -57,9 +59,12 @@ public: // Interfaces
 private:
 	glm::vec3 calculateColor(Ray& ray, unsigned int iter_depth);
 
+	bool traverseBVH(Ray& ray, BVH::Node* box);
+
 private:
 	std::string _name;
 	std::vector<std::shared_ptr<Object>>& scene;
+	std::shared_ptr<BVH> bvh;
 	int _width, _height;
 	float _fov_vertical, _aspect;
 	int _channels;

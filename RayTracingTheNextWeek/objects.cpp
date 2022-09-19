@@ -26,7 +26,16 @@ bool Sphere::intersectionTest(Ray& ray, float t_min, float t_max)
 			ray.hitInfo().hit_point = ray.cast(ray.hitInfo().hit_time_first);
 			ray.hitInfo().hit_point_normal = (ray.hitInfo().hit_point - this->center) / this->radius;
 			ray.hitInfo().hit_object_material = this->material;
+			ray.hitInfo().hit_point_texture = this->color;
 		}
 	}
 	return isVaildIntersection;
+}
+
+
+bool Sphere::bindAABB(AABB* aabb)
+{
+	aabb->info.p_min = this->center - glm::vec3{this->radius, this->radius ,this->radius};
+	aabb->info.p_max = this->center + glm::vec3{ this->radius, this->radius ,this->radius };
+	return true;
 }

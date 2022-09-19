@@ -7,12 +7,15 @@
 
 #include "ray.hpp"
 #include "materials.hpp"
+#include "BVH.hpp"
 
+class AABB;
 class Object
 {
 public:
 	Object(glm::vec3 color, std::shared_ptr<Material> material_info) :color{ color }, material{ material_info } {};
 	virtual bool intersectionTest(Ray& ray, float t_min, float t_max) = 0;
+	virtual bool bindAABB(AABB* aabb) = 0;
 
 public:
 	glm::vec3 color;
@@ -27,12 +30,13 @@ class Sphere
 public:
 	Sphere() = delete;
 	Sphere(glm::vec3 center, float radius, glm::vec3 color, std::shared_ptr<Material> material_info)
-		:center{ center }, radius{ radius }, Object{ color , material_info } 
+		:center{ center }, radius{ radius }, Object{ color , material_info }
 	{
 		this->material->fuzz = std::min(radius, 1.0f);
 	}
 
 	virtual bool intersectionTest(Ray& ray, float t_min, float t_max);
+	virtual bool bindAABB(AABB* aabb);
 public:
 	glm::vec3 center;
 	float radius;

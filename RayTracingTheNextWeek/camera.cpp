@@ -3,7 +3,7 @@
 void Camera::shoot(float rr_prob)
 {
 	this->rr_prob = rr_prob;
-	this->rr_recursion_upper = std::ceil(std::log(0.001) / std::log(rr_prob));
+	this->rr_recursion_upper = std::min(200u, static_cast<unsigned int>(std::ceil(std::log(0.001) / std::log(rr_prob))));
 
 	long long totalSamplingNum = _height * _width * msaa_times / 100;
 	std::cout << "Total Sampling>> " << totalSamplingNum  * 100 << '\n';
@@ -42,7 +42,6 @@ void Camera::shoot(float rr_prob)
 				}
 			}
 			color /= static_cast<float>(this->msaa_times);
-			//color /= rr_prob;
 			
 			gamma_correction(color);
 			this->write(_height - (row + 1), col, color);
@@ -76,30 +75,99 @@ void Camera::setView(glm::vec3 position, glm::vec3 lookAt, glm::vec3 worldUp, fl
 
 glm::vec3 Camera::calculateColor(Ray& ray, unsigned int iter_depth)
 {
-	if (iter_depth > this->rr_recursion_upper) return glm::vec3(0.0, 0.0, 0.0);
 	bool intersected = false;
-	for (auto& object : this->scene)
+	if (!this->bvh) // BVH off
 	{
-		intersected |= object->intersectionTest(ray, 0.0f, std::numeric_limits<float>::max());
-	}
+		if (iter_depth > this->rr_recursion_upper) return glm::vec3{ 0,0,0 };
 
-	if (intersected)
-	{ // At least 10 bounces
-		if (russianRoulette() > this->rr_prob) return glm::vec3(0.0, 0.0, 0.0);
-
-		//return (ray.hitInfo().hit_point_normal + 1.0f) * 0.5f;//object->color; // Visualize Normal
-		glm::vec3 attenuation;
-		Ray ray_scattered{};
-		if (ray.hitInfo().hit_object_material.lock()->scatter(ray, ray_scattered, attenuation))
+		for (auto& object : this->scene)
 		{
-			return attenuation * calculateColor(ray_scattered, iter_depth + 1) / this->rr_prob;
+			intersected |= object->intersectionTest(ray, 0.0f, std::numeric_limits<float>::max());
+		}
+		if (intersected)
+		{
+			if (russianRoulette() > this->rr_prob) return glm::vec3{ 0,0,0 };
+			//return (ray.hitInfo().hit_point_normal + 1.0f) * 0.5f;//object->color; // Visualize Normal
+			glm::vec3 attenuation;
+			Ray ray_scattered{};
+			if (ray.hitInfo().hit_object_material.lock()->scatter(ray, ray_scattered, attenuation))
+			{
+				return attenuation * calculateColor(ray_scattered, iter_depth + 1) / this->rr_prob;
+			}
 		}
 	}
+	else // BVH on
+	{
+		auto* box = this->bvh->root.get();
+		if (box->isLeave())
+		{
+			if (box->bounding->host->intersectionTest(ray, 0.0f, std::numeric_limits<float>::max()))
+			{
+				if (russianRoulette() > this->rr_prob) return glm::vec3{ 0,0,0 };
+				glm::vec3 attenuation;
+				Ray ray_scattered{};
+				if (ray.hitInfo().hit_object_material.lock()->scatter(ray, ray_scattered, attenuation))
+				{
+					return attenuation * calculateColor(ray_scattered, iter_depth + 1) / this->rr_prob;
+				}
+			}	
+		}
+		else  
+		{
+			if (box->bounding->intersectionTest(ray, 0.0f, std::numeric_limits<float>::max()))
+			{
+				Ray probeL{ ray }, probeR{ ray };
+				bool hitL = traverseBVH(probeL, box->left);
+				bool hitR = traverseBVH(probeR, box->right);
 
-	// Background
+				if (hitL || hitR) // intersected
+				{
+					if (russianRoulette() > this->rr_prob) return glm::vec3{ 0,0,0 };
+					ray.swapHitInfo((probeL.hitInfo().hit_time_first < probeR.hitInfo().hit_time_first ? probeL.hitInfo() : probeR.hitInfo()));
+
+					glm::vec3 attenuation;
+					Ray ray_scattered{};
+					if (ray.hitInfo().hit_object_material.lock()->scatter(ray, ray_scattered, attenuation))
+					{
+						return attenuation * calculateColor(ray_scattered, iter_depth + 1) / this->rr_prob;
+					}
+				}
+			}
+		}
+	}// end switch Mode
+
+	// Background (Light Source)
 	glm::vec3 normalizedDir = glm::normalize(ray.direction());
 	float t = 0.5 * (normalizedDir.y + 1.0); // -1.0 <= range(y) <= 1.0
 	return (1.0f - t) * glm::vec3(1.0, 1.0, 1.0) + t * glm::vec3(0.5, 0.7, 1.0);
+}
+
+bool Camera::traverseBVH(Ray& ray, BVH::Node* box)
+{
+	if (!box) return false;
+	if (box->bounding->intersectionTest(ray, 0.0f, std::numeric_limits<float>::max())) // Hit
+	{
+		if (box->isLeave())
+		{
+			if (box->bounding->host->intersectionTest(ray, 0.0f, std::numeric_limits<float>::max())) return true;
+			else return false;
+		}
+		else
+		{
+			Ray probeL{ ray };
+			Ray probeR{ ray };
+			bool hitL = traverseBVH(probeL, box->left);
+			bool hitR = traverseBVH(probeR, box->right);
+
+			if (hitL || hitR)
+			{
+				ray.swapHitInfo((probeL.hitInfo().hit_time_first < probeR.hitInfo().hit_time_first ? probeL.hitInfo() : probeR.hitInfo()));
+				return true;
+			}
+			else return false;
+		}
+	}
+	return false;// Miss
 }
 
 void Camera::write(int row, int col, const glm::vec3& color)
@@ -117,6 +185,12 @@ void Camera::setLens(float r_aperture, float focus_dist)
 	this->aperture_radius = r_aperture;
 	this->focus_dist = focus_dist;
 	setView(this->origin, this->lookAt, this->worldUp);
+}
+
+void Camera::bindBVH(std::shared_ptr<BVH> bvh)
+{
+	this->bvh = bvh;
+	std::cout << "Successfully bind to BVH\n";
 }
 
 void Camera::defaultPicture()

@@ -19,18 +19,23 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BVH.hpp" />
     <ClInclude Include="camera.hpp" />
     <ClInclude Include="materials.hpp" />
     <ClInclude Include="objects.hpp" />
     <ClInclude Include="ray.hpp" />
+    <ClInclude Include="texture.hpp" />
     <ClInclude Include="utils.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BVH.cpp" />
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="materials.cpp" />
     <ClCompile Include="objects.cpp" />
     <ClCompile Include="ray.cpp" />
+    <ClCompile Include="texture.cpp" />
+    <ClCompile Include="unit_test.hpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
