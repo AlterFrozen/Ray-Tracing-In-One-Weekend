@@ -3,7 +3,7 @@
 void Camera::shoot(float rr_prob)
 {
 	this->rr_prob = rr_prob;
-	this->rr_recursion_upper = std::min(200u, static_cast<unsigned int>(std::ceil(std::log(0.001) / std::log(rr_prob))));
+	this->rr_recursion_upper = static_cast<unsigned int>(std::ceil(std::log(0.001) / std::log(rr_prob)));
 
 	long long totalSamplingNum = _height * _width * msaa_times / 100;
 	std::cout << "Total Sampling>> " << totalSamplingNum  * 100 << '\n';
@@ -116,14 +116,12 @@ glm::vec3 Camera::calculateColor(Ray& ray, unsigned int iter_depth)
 		{
 			if (box->bounding->intersectionTest(ray, 0.0f, std::numeric_limits<float>::max()))
 			{
-				Ray probeL{ ray }, probeR{ ray };
-				bool hitL = traverseBVH(probeL, box->left);
-				bool hitR = traverseBVH(probeR, box->right);
+				bool hasIntersected = traverseBVH(ray, box->left) | traverseBVH(ray, box->right);
 
-				if (hitL || hitR) // intersected
+				if (hasIntersected)
 				{
 					if (russianRoulette() > this->rr_prob) return glm::vec3{ 0,0,0 };
-					ray.swapHitInfo((probeL.hitInfo().hit_time_first < probeR.hitInfo().hit_time_first ? probeL.hitInfo() : probeR.hitInfo()));
+					//ray.swapHitInfo((probeL.hitInfo().hit_time_first < probeR.hitInfo().hit_time_first ? probeL.hitInfo() : probeR.hitInfo()));
 
 					glm::vec3 attenuation;
 					Ray ray_scattered{};
@@ -154,17 +152,7 @@ bool Camera::traverseBVH(Ray& ray, BVH::Node* box)
 		}
 		else
 		{
-			Ray probeL{ ray };
-			Ray probeR{ ray };
-			bool hitL = traverseBVH(probeL, box->left);
-			bool hitR = traverseBVH(probeR, box->right);
-
-			if (hitL || hitR)
-			{
-				ray.swapHitInfo((probeL.hitInfo().hit_time_first < probeR.hitInfo().hit_time_first ? probeL.hitInfo() : probeR.hitInfo()));
-				return true;
-			}
-			else return false;
+			return traverseBVH(ray, box->left) | traverseBVH(ray, box->right);
 		}
 	}
 	return false;// Miss
@@ -181,7 +169,7 @@ void Camera::write(int row, int col, const glm::vec3& color)
 
 void Camera::setLens(float r_aperture, float focus_dist)
 {
-	assert(r_aperture > 0 && "The radius of aperture at least greater than 0!");
+	assert(r_aperture >= 0.0f && "The radius of aperture at least equeal to 0!");
 	this->aperture_radius = r_aperture;
 	this->focus_dist = focus_dist;
 	setView(this->origin, this->lookAt, this->worldUp);

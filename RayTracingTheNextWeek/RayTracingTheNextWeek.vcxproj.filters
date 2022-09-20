@@ -36,6 +36,9 @@
     <ClInclude Include="texture.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="noise.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="camera.cpp">
@@ -63,6 +66,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="texture.cpp">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
+    <ClCompile Include="noise.cpp">
       <Filter>Resource Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -13,12 +13,11 @@ class AABB;
 class Object
 {
 public:
-	Object(glm::vec3 color, std::shared_ptr<Material> material_info) :color{ color }, material{ material_info } {};
+	Object(std::shared_ptr<Material> material_info) : material{ material_info } {};
 	virtual bool intersectionTest(Ray& ray, float t_min, float t_max) = 0;
 	virtual bool bindAABB(AABB* aabb) = 0;
 
 public:
-	glm::vec3 color;
 	std::shared_ptr<Material> material;
 };
 
@@ -29,8 +28,8 @@ class Sphere
 	// Ray Intersection Test>> point = ray
 public:
 	Sphere() = delete;
-	Sphere(glm::vec3 center, float radius, glm::vec3 color, std::shared_ptr<Material> material_info)
-		:center{ center }, radius{ radius }, Object{ color , material_info }
+	Sphere(glm::vec3 center, float radius, std::shared_ptr<Material> material_info)
+		:center{ center }, radius{ radius }, Object{ material_info }
 	{
 		this->material->fuzz = std::min(radius, 1.0f);
 	}

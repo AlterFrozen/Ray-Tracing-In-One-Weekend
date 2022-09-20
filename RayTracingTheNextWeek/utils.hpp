@@ -2,6 +2,7 @@
 //STD
 #include <random>
 #include <numeric>
+#include <memory>
 #include <cmath>
 
 //3rd Party
@@ -12,6 +13,18 @@ namespace
 	static std::default_random_engine defaultRandomEngine;
 	static std::uniform_real_distribution<float> ufDistribution(-1.0, 1.0);
 }
+
+class UniformFloatRandomer
+{
+public:
+	UniformFloatRandomer(float lower, float upper)
+		:uniDis{ std::make_unique< std::uniform_real_distribution<float> >(lower, upper) } {};
+
+	float operator() (void) { return ( * (this->uniDis))(this->e); }
+private:
+	std::default_random_engine e;
+	std::unique_ptr<std::uniform_real_distribution<float>> uniDis;
+};
 
 glm::vec3 random_in_unit_sphere();
 glm::vec3 random_in_unit_disk();

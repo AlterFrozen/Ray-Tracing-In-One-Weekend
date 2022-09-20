@@ -6,6 +6,7 @@
 
 #include "ray.hpp"
 #include "utils.hpp"
+#include "texture.hpp"
 
 class Ray;
 
@@ -26,11 +27,11 @@ public:
 struct Lambertian // Diffuse
 	:public Material
 {
-	Lambertian(glm::vec3 abedo) :abedo{ abedo }, Material{ DIFFUSE } {};
+	Lambertian(std::shared_ptr<Texture> abedo) :abedo{ abedo }, Material{ DIFFUSE } {};
 
 	virtual bool scatter(Ray& ray_in, Ray& ray_scatter, glm::vec3& attenuation) const;
 
-	glm::vec3 abedo; 
+	std::shared_ptr<Texture> abedo; 
 };
 
 struct Metal // Specular
