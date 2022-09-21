@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <iostream>
 #include "utils.hpp"
 
 namespace
@@ -13,14 +14,15 @@ class Perlin
 public:
 	Perlin(float frequency = 1.0f);
 
-	float generate(glm::vec3 p, bool lerp = true) const;
+	float generate(const glm::vec3& po, bool genTurbulence = false, bool lerp = true) const;
+
 private:
 	inline float triLerp(glm::vec3 c[2][2][2], float u, float v, float w) const
 	{
 		// smooth Mach Band via Hermite Cubic
-		u = u * u * (3 - 2 * u);
-		v = v * v * (3 - 2 * v);
-		w = w * w * (3 - 2 * w);
+		float uu = u * u * (3 - 2 * u);
+		float vv = v * v * (3 - 2 * v);
+		float ww = w * w * (3 - 2 * w);
 
 		float acc = 0;
 		for (int i = 0; i < 2; i++)
@@ -28,10 +30,24 @@ private:
 				for (int k = 0; k < 2; k++)
 				{
 					glm::vec3 weight_v(u - i, v - j, w - k);
-					acc += ((i * u + (1 - i) * (1 - u)) * (j * v + (1 - j) * (1 - v)) * (k * w + (1 - k) * (1 - w))) * (glm::dot(c[i][j][k], weight_v));
+					acc += ((i * uu + (1 - i) * (1 - uu)) * (j * vv + (1 - j) * (1 - vv)) * (k * ww + (1 - k) * (1 - ww))) * (glm::dot(c[i][j][k], weight_v));
 				}
-					
-		return acc;
+
+		return fabs(acc); // textbook:: return acc, however, my result shows some errors.
+	}
+
+	inline float turbulence(const glm::vec3& p, int depth = 7) const
+	{
+		float acc = 0;
+		glm::vec3 temp_p = p;
+		float weight = 1.0f;
+		for (int i = 0; i < depth; ++i)
+		{
+			acc += weight * this->generate(temp_p);
+			weight *= 0.5;
+			temp_p *= 2.0;
+		}
+		return fabs(acc);
 	}
 public:
 	static bool hasInitialized;

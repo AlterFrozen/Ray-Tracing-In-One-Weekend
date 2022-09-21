@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 #include "glm/glm.hpp"
 
@@ -43,9 +44,35 @@ class NoiseTexture
 	:public Texture
 {
 public:
-	NoiseTexture() = default;
+	NoiseTexture(float frequency) :noise_perlin{ frequency }, frequency{ frequency }{};
 	virtual glm::vec3 value(float u, float v, const glm::vec3& p) const;
 
 private:
 	Perlin noise_perlin;
+	float frequency;
+};
+
+class Bedrock
+	:public Texture
+{
+public:
+	Bedrock(float frequency) :noise_perlin{ frequency }, frequency{ frequency } {};
+	virtual glm::vec3 value(float u, float v, const glm::vec3& p) const;
+
+private:
+	Perlin noise_perlin;
+	float frequency;
+};
+
+class ImageTexture
+	:public Texture
+{
+public:
+	ImageTexture() = delete;
+	ImageTexture(const std::string& image_path);
+	virtual glm::vec3 value(float u, float v, const glm::vec3& p) const;
+
+private:
+	int nx, ny, nc;
+	unsigned char* data = nullptr;
 };

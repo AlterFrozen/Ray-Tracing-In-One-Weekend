@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="3rdParty">
+      <UniqueIdentifier>{f298853f-28a0-471a-9dce-5c7d6a18ffdc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.hpp">
@@ -38,6 +41,9 @@
     </ClInclude>
     <ClInclude Include="noise.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stb_image.hpp">
+      <Filter>3rdParty</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

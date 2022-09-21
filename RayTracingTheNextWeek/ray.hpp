@@ -16,7 +16,7 @@ public:
 		glm::vec3 hit_point;
 		glm::vec3 hit_point_normal;
 		std::weak_ptr<Material> hit_object_material;
-		glm::vec3 hit_point_texture;
+		glm::vec2 hit_point_uv;
 	};
 
 	Ray() = default;

@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "glm/glm.hpp"
+#include "glm/gtc/constants.hpp"
 
 #include "ray.hpp"
 #include "materials.hpp"
@@ -36,6 +37,17 @@ public:
 
 	virtual bool intersectionTest(Ray& ray, float t_min, float t_max);
 	virtual bool bindAABB(AABB* aabb);
+
+private:
+	inline void getUV(const glm::vec3& p, float& result_u, float& result_v)
+	{
+		// Note that our definition of the coordinate
+		float phi = atan2(p.z, p.x);
+		float theta = asin(p.y);
+		result_u = 1.0f - (phi + glm::pi<float>()) / glm::two_pi<float>();
+		result_v = (theta + glm::half_pi<float>()) / glm::pi<float>();
+	}
+
 public:
 	glm::vec3 center;
 	float radius;

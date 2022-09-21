@@ -25,6 +25,7 @@
     <ClInclude Include="noise.hpp" />
     <ClInclude Include="objects.hpp" />
     <ClInclude Include="ray.hpp" />
+    <ClInclude Include="stb_image.hpp" />
     <ClInclude Include="texture.hpp" />
     <ClInclude Include="utils.hpp" />
   </ItemGroup>

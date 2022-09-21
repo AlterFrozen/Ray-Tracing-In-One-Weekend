@@ -38,7 +38,7 @@ glm::vec3 random_in_unit_sphere()
 {
 	glm::vec3 innerPoint;
 	do {
-		innerPoint = glm::vec3(::ufDistribution(::defaultRandomEngine), ::ufDistribution(::defaultRandomEngine), ::ufDistribution(::defaultRandomEngine));
+		innerPoint = glm::vec3(randfMOneToOne(), randfMOneToOne(), randfMOneToOne());
 	} while (glm::dot(innerPoint, innerPoint) >= 1.0);
 	return innerPoint;
 }
@@ -47,7 +47,7 @@ glm::vec3 random_in_unit_disk()
 {
 	glm::vec3 innerPoint;
 	do {
-		innerPoint = glm::vec3(::ufDistribution(::defaultRandomEngine), ::ufDistribution(::defaultRandomEngine), 0.0f);
+		innerPoint = glm::vec3(randfMOneToOne(), randfMOneToOne(), 0.0f);
 	} while (glm::dot(innerPoint, innerPoint) > 1.0);
 	return innerPoint;
 }

@@ -5,7 +5,7 @@ bool Lambertian::scatter(Ray& ray_in, Ray& ray_scatter, glm::vec3& attenuation) 
 	glm::vec3 s = ray_in.hitInfo().hit_point + ray_in.hitInfo().hit_point_normal + random_in_unit_sphere();
 
 	ray_scatter = Ray(ray_in.hitInfo().hit_point, s - ray_in.hitInfo().hit_point);
-	attenuation = this->abedo->value(0, 0, ray_in.hitInfo().hit_point);
+	attenuation = this->abedo->value(ray_in.hitInfo().hit_point_uv[0], ray_in.hitInfo().hit_point_uv[1], ray_in.hitInfo().hit_point);
 	return true;
 }
 

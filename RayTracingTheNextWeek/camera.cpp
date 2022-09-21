@@ -135,6 +135,7 @@ glm::vec3 Camera::calculateColor(Ray& ray, unsigned int iter_depth)
 	}// end switch Mode
 
 	// Background (Light Source)
+	return { 1.0,1.0,1.0 };
 	glm::vec3 normalizedDir = glm::normalize(ray.direction());
 	float t = 0.5 * (normalizedDir.y + 1.0); // -1.0 <= range(y) <= 1.0
 	return (1.0f - t) * glm::vec3(1.0, 1.0, 1.0) + t * glm::vec3(0.5, 0.7, 1.0);

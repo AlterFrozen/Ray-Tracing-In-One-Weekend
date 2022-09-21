@@ -37,12 +37,12 @@ public:
 	void execute()
 	{
 		//Scene
-		initScene("perlin spheres");
+		initScene("earth");
 		camera.bindBVH(std::make_shared<BVH>(this->scene));
 
 		//Sampling
-		camera.setMSAA(100);
-		camera.shoot(0.9);
+		camera.setMSAA(1000);
+		camera.shoot(0.95);
 	}
 
 private: //helper
@@ -50,13 +50,14 @@ private: //helper
 	{
 		this->scene.clear();
 		//Spheres
-		const glm::vec3 defaultColor(0.5, 0.5, 0.0);
 		std::shared_ptr<Texture> blueDream = std::make_shared<ConstantTexture>(glm::vec3{ 0.1, 0.2, 0.5 });
 		std::shared_ptr<Texture> grass = std::make_shared<ConstantTexture>(glm::vec3{ 0.8, 0.8, 0.0 });
 		std::shared_ptr<Texture> redish = std::make_shared<ConstantTexture>(glm::vec3{ 0.8, 0.1, 0.0 });
 		std::shared_ptr<Texture> silver = std::make_shared<ConstantTexture>(glm::vec3{ 0.7, 0.7, 0.7 });
 		std::shared_ptr<Texture> knight = std::make_shared<CheckerTexture>(silver, redish);
-		std::shared_ptr<Texture> marble = std::make_shared<NoiseTexture>();
+		std::shared_ptr<Texture> bedrock = std::make_shared<Bedrock>(1.0);
+		std::shared_ptr<Texture> marble = std::make_shared<NoiseTexture>(1.0);
+		std::shared_ptr<Texture> earth = std::make_shared<ImageTexture>(app_path + "/textures/earth.jpg");
 		
 		if (name.empty()) //default
 		{
@@ -80,6 +81,12 @@ private: //helper
 				std::make_shared<Lambertian>(marble)));
 			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(0.0, -1000.0, 0.0), 1000.0,
 				std::make_shared<Lambertian>(marble)));
+		}
+		else if (name == "earth")
+		{
+			std::cout << "[Scene]  Earth\n";
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(0.0, 0.0, -1.0), 0.5,
+				std::make_shared<Lambertian>(earth)));
 		}
 		else if (name == "textbook cover")
 		{

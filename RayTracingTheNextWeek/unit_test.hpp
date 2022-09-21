@@ -10,6 +10,7 @@
 #include "BVH.hpp"
 #include "ray.hpp"
 #include "objects.hpp"
+#include "materials.hpp"
 #include "utils.hpp"
 
 
@@ -26,6 +27,9 @@ static struct UnitTest
 		//	AABB box(glm::vec3{ 0, -0.5, -0.5 }, glm::vec3{ 1, 0.5, 0.5 });
 		//	if (box.intersectionTest(ray, 0, std::numeric_limits<float>::max())) break;
 		//
+
+		//Image
+		ImageTexture image(app_path + "/textures/earth.jpg");
 	}
 
 	template<typename type>

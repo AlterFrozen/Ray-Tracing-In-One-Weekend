@@ -13,7 +13,7 @@ Perlin::Perlin(float frequency/* = 1.0f*/)
 {
 	if (Perlin::hasInitialized) return;
 	else Perlin::hasInitialized = true;
-
+	
 	auto randfMOneToOne = UniformFloatRandomer(-1.0f, 1.0f);
 
 	for (int i = 0; i < Perlin::randFloat.size(); ++i)
@@ -46,10 +46,14 @@ Perlin::Perlin(float frequency/* = 1.0f*/)
 	}
 }
 
-float Perlin::generate(glm::vec3 p, bool lerp/* = true */) const
+float Perlin::generate(const glm::vec3& po, bool genTurbulence/* = false*/, bool lerp/* = true*/) const
 {
-	p *= this->frequency;
-	if (lerp)
+	auto p = this->frequency * po;
+	if (genTurbulence)
+	{
+		return this->turbulence(po);
+	}
+	else if (lerp)
 	{
 		float u = p.x - floor(p.x);
 		float v = p.y - floor(p.y);
@@ -63,7 +67,7 @@ float Perlin::generate(glm::vec3 p, bool lerp/* = true */) const
 		for (int di = 0; di < 2; ++di)
 			for (int dj = 0; dj < 2; ++dj)
 				for (int dk = 0; dk < 2; ++dk)
-					c[di][dj][dk] = Perlin::randFloatVec[Perlin::perm_x[(i + di) & 255] ^ Perlin::perm_y[(j + dj) & 255] ^ Perlin::perm_z[(k + dk) & 255]];
+					c[di][dj][dk] = Perlin::randFloatVec[(Perlin::perm_x[(i + di) & 255]) ^ (Perlin::perm_y[(j + dj) & 255]) ^ (Perlin::perm_z[(k + dk) & 255])];
 		return this->triLerp(c, u, v, w);
 	}
 	else
