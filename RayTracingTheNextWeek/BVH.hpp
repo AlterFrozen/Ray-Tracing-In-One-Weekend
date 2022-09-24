@@ -63,7 +63,8 @@ public:
 	BVH(std::vector<std::shared_ptr<Object>>& objects) :data{ objects } 
 	{
 		std::cout << "Building Up>> BVH\n";
-		root = std::make_unique<Node>(*this, 0, data.size());
+		if (data.empty()) std::cerr << "[WARNING]: no objects to initialize BVH\n";
+		else root = std::make_unique<Node>(*this, 0, data.size());
 	};
 
 	std::unique_ptr<Node> root;

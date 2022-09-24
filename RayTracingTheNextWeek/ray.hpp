@@ -17,6 +17,8 @@ public:
 		glm::vec3 hit_point_normal;
 		std::weak_ptr<Material> hit_object_material;
 		glm::vec2 hit_point_uv;
+		// Test 
+		//std::vector<std::shared_ptr<Material>> path;
 	};
 
 	Ray() = default;

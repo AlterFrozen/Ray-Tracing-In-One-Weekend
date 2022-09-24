@@ -29,35 +29,41 @@ typedef std::chrono::high_resolution_clock Clock;
 class RayTracing
 {
 private:
-	const int range_x = 200, range_y = 100;
+	const int range_x = 100, range_y = 100;
+	const float vFov = static_cast<float>(range_x) / static_cast<float>(range_y);
 	std::vector<std::shared_ptr<Object>> scene;
-	Camera camera{ range_x, range_y, 3, 90, static_cast<float>(range_x) / static_cast<float>(range_y), ppm, "result" , scene };
+	Camera camera{ range_x, range_y, 3, 90, vFov,
+									ppm, "result" , scene, Environment::nature };
 	Clock::time_point time_execute_start = Clock::now();
 public:
 	void execute()
 	{
 		//Scene
-		initScene("earth");
+		initScene("Cornell Box");
 		camera.bindBVH(std::make_shared<BVH>(this->scene));
 
 		//Sampling
-		camera.setMSAA(1000);
+		camera.setMSAA(100);
+		camera.setHDR(ToneMapping::ACES);
 		camera.shoot(0.95);
 	}
 
 private: //helper
+	//Textures
+	std::shared_ptr<Texture> blueDream = std::make_shared<ConstantTexture>(glm::vec3{ 0.1, 0.2, 0.5 });
+	std::shared_ptr<Texture> grass = std::make_shared<ConstantTexture>(glm::vec3{ 0.8, 0.8, 0.0 });
+	std::shared_ptr<Texture> redish = std::make_shared<ConstantTexture>(glm::vec3{ 0.65, 0.05, 0.05 });
+	std::shared_ptr<Texture> white = std::make_shared<ConstantTexture>(glm::vec3{ 0.73, 0.73, 0.73 });
+	std::shared_ptr<Texture> green = std::make_shared<ConstantTexture>(glm::vec3{ 0.12, 0.45, 0.15 });
+	std::shared_ptr<Texture> silver = std::make_shared<ConstantTexture>(glm::vec3{ 0.7, 0.7, 0.7 });
+	std::shared_ptr<Texture> knight = std::make_shared<CheckerTexture>(silver, redish);
+	std::shared_ptr<Texture> bedrock = std::make_shared<Bedrock>(1.0);
+	std::shared_ptr<Texture> marble = std::make_shared<NoiseTexture>(1.0);
+	std::shared_ptr<Texture> earth = std::make_shared<ImageTexture>(app_path + "/textures/earth.jpg");
+
 	void initScene(std::string name = "")
 	{
 		this->scene.clear();
-		//Spheres
-		std::shared_ptr<Texture> blueDream = std::make_shared<ConstantTexture>(glm::vec3{ 0.1, 0.2, 0.5 });
-		std::shared_ptr<Texture> grass = std::make_shared<ConstantTexture>(glm::vec3{ 0.8, 0.8, 0.0 });
-		std::shared_ptr<Texture> redish = std::make_shared<ConstantTexture>(glm::vec3{ 0.8, 0.1, 0.0 });
-		std::shared_ptr<Texture> silver = std::make_shared<ConstantTexture>(glm::vec3{ 0.7, 0.7, 0.7 });
-		std::shared_ptr<Texture> knight = std::make_shared<CheckerTexture>(silver, redish);
-		std::shared_ptr<Texture> bedrock = std::make_shared<Bedrock>(1.0);
-		std::shared_ptr<Texture> marble = std::make_shared<NoiseTexture>(1.0);
-		std::shared_ptr<Texture> earth = std::make_shared<ImageTexture>(app_path + "/textures/earth.jpg");
 		
 		if (name.empty()) //default
 		{
@@ -69,6 +75,61 @@ private: //helper
 			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(1.0, 0.0, -1.0), 0.5, std::make_shared<Metal>(glm::vec3(0.8, 0.6, 0.2))));
 			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(-1.0, 0.0, -1.0), 0.5, std::make_shared<Dielectric>(1.5f)));
 			//this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(-1.0, 0.0, -1.0), -0.45, std::make_shared<Dielectric>(1.5f))); // Hollow
+		}
+		else if (name == "Cornell Box[beta]")
+		{
+			std::cout << "[Scene]  Cornell Box[beta]\n";
+			camera.setEnvironment(Environment::booming);
+			this->camera.setView({ 278,278,-800 }, { 278,278,0 }, glm::vec3{ 0,1,0 }, 40);
+			this->camera.setLens(0.0, 10.0);
+
+			//Extra
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3((153.0 + 403.0) / 2.0, 280, (392.0 + 554.0) / 2.0), 200,
+				std::make_shared<Lambertian>(earth)));
+
+			//Cornell Box
+			std::shared_ptr<Texture> light = std::make_shared<ConstantTexture>(glm::vec3{ 10, 10, 10 });
+			this->scene.emplace_back(std::make_shared<RectangleXZ>(153, 403, 167, 392, 554, std::make_shared<DiffuseLight>(light)));
+
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(-20000.0, 280, 0.0), 20000, // left
+				std::make_shared<Lambertian>(redish)));
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(20555.0, 280, 0.0), 20000, // right
+				std::make_shared<Lambertian>(green)));
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(278, 20555, 0.0), 20000, // top
+				std::make_shared<Lambertian>(white)));
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(278, -20000, 0.0), 20000, // bottom
+				std::make_shared<Lambertian>(white)));
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(278, 0, 20555), 20000, // back
+				std::make_shared<Lambertian>(white)));
+
+		}
+		else if (name == "Cornell Box")
+		{
+			std::cout << "[Scene]  Cornell Box\n";
+			camera.setEnvironment(Environment::nature);
+
+			static Object::AddtionalInfo flip;
+			flip.flip_normal = true;
+
+			this->camera.setView({ 278,278,-800 }, { 278,278,0 }, glm::vec3{ 0,1,0 }, 40);
+			this->camera.setLens(0.0, 10.0);
+
+			std::shared_ptr<Texture> light = std::make_shared<ConstantTexture>(glm::vec3{ 10,10,10 });
+			this->scene.emplace_back(std::make_shared<RectangleXZ>(213, 343, 227, 332, 554, std::make_shared<DiffuseLight>(light)));
+
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(255, 255, 270), 100,
+				std::make_shared<DiffuseLight>(light)));
+
+			this->scene.emplace_back(std::make_shared<RectangleYZ>(0, 555, 0, 555, 555, std::make_shared<Lambertian>(green)));
+			//this->scene.back()->additional_info = &flip;
+			this->scene.emplace_back(std::make_shared<RectangleYZ>(0, 555, 0, 555, 0, std::make_shared<Lambertian>(redish)));
+
+			this->scene.emplace_back(std::make_shared<RectangleXZ>(0, 555, 0, 555, 0, std::make_shared<Lambertian>(redish)));
+			this->scene.emplace_back(std::make_shared<RectangleXZ>(0, 555, 0, 555, 555, std::make_shared<Lambertian>(white)));
+			////this->scene.back()->additional_info = &flip;
+
+			this->scene.emplace_back(std::make_shared<RectangleXY>(0, 555, 0, 555, 555, std::make_shared<Lambertian>(white)));
+			////this->scene.back()->additional_info = &flip;
 		}
 		else if (name == "perlin spheres")
 		{
@@ -85,8 +146,23 @@ private: //helper
 		else if (name == "earth")
 		{
 			std::cout << "[Scene]  Earth\n";
+			camera.setEnvironment(Environment::booming);
 			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(0.0, 0.0, -1.0), 0.5,
 				std::make_shared<Lambertian>(earth)));
+		}
+		else if (name == "zen")
+		{
+			std::cout << "[Scene]  Zen\n";
+			camera.setEnvironment(Environment::darkness);
+
+			std::shared_ptr<Texture> light = std::make_shared<ConstantTexture>(glm::vec3{ 4.0,4.0,4.0 });
+
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(0.0, 4, -1.0), 2,
+				std::make_shared<DiffuseLight>(light)));
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(0.0, -100.5, -1.0), 100, 
+				std::make_shared<Lambertian>(marble)));
+			this->scene.emplace_back(std::make_shared<Sphere>(glm::vec3(0.0, 0, -1.0), 0.5,
+				std::make_shared<Lambertian>(marble)));	
 		}
 		else if (name == "textbook cover")
 		{

@@ -10,14 +10,16 @@
 
 class Ray;
 
+typedef enum { SPECULAR, DIFFUSE, DIELECTRIC, LIGHT } MaterialTypes;
+
 class Material
 {
 public:
-	typedef enum { SPECULAR, DIFFUSE, DIELECTRIC} MaterialTypes;
 	Material() = delete;
 	Material(MaterialTypes material_type) :material_type{ material_type } {  };
 
 	virtual bool scatter(Ray& ray_in, Ray& ray_scatter, glm::vec3& attenuation) const = 0;
+	virtual glm::vec3 emitted(float u, float v, const glm::vec3& p) const { return { 0,0,0 }; } // return Black(No Emition)
 
 public:
 	MaterialTypes material_type;
@@ -52,4 +54,20 @@ struct Dielectric
 	virtual bool scatter(Ray& ray_in, Ray& ray_scatter, glm::vec3& attenuation) const;
 
 	float refractiveIndice = 1.0f; //N(medium) / N(air/vacuum)
+};
+
+struct DiffuseLight
+	:public Material
+{
+public:
+	DiffuseLight() = delete;
+	DiffuseLight(std::shared_ptr<Texture> light_info) :emit{ light_info }, Material{ LIGHT } {};
+	virtual bool scatter(Ray& ray_in, Ray& ray_scatter, glm::vec3& attenuation) const { return false; } 
+	virtual glm::vec3 emitted(float u, float v, const glm::vec3& p) const
+	{
+		return this->emit->value(u, v, p);
+	}
+
+private:
+	std::shared_ptr<Texture> emit;
 };

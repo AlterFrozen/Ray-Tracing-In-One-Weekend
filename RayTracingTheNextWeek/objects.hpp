@@ -14,12 +14,19 @@ class AABB;
 class Object
 {
 public:
-	Object(std::shared_ptr<Material> material_info) : material{ material_info } {};
+	struct AddtionalInfo
+	{
+		bool flip_normal = false;
+	};
+public:
+	Object() = default;
+	Object(std::shared_ptr<Material> material_info, AddtionalInfo* additional_info = nullptr) : material{ material_info} {};
 	virtual bool intersectionTest(Ray& ray, float t_min, float t_max) = 0;
 	virtual bool bindAABB(AABB* aabb) = 0;
 
 public:
 	std::shared_ptr<Material> material;
+	AddtionalInfo* additional_info;
 };
 
 class Sphere
@@ -52,3 +59,61 @@ public:
 	glm::vec3 center;
 	float radius;
 };
+
+class RectangleXY
+	:public Object
+{
+public:
+	RectangleXY() = delete;
+	RectangleXY(float x0, float x1, float y0, float y1, float k, std::shared_ptr<Material> material_info)
+		:x0{ x0 }, x1{ x1 }, y0{ y0 }, y1{ y1 }, k{ k }, Object{ material_info } {};
+
+	virtual bool intersectionTest(Ray& ray, float t_min, float t_max) ;
+	virtual bool bindAABB(AABB* aabb);
+private:
+	float x0, x1, y0, y1;
+	float k;
+};
+
+class RectangleXZ
+	:public Object
+{
+public:
+	RectangleXZ() = delete;
+	RectangleXZ(float x0, float x1, float z0, float z1, float k,  std::shared_ptr<Material> material_info)
+		:x0{ x0 }, x1{ x1 }, z0{ z0 }, z1{ z1 }, k{ k }, Object{ material_info } {};
+
+	virtual bool intersectionTest(Ray& ray, float t_min, float t_max);
+	virtual bool bindAABB(AABB* aabb);
+private:
+	float x0, x1, z0, z1;
+	float k;
+};
+
+class RectangleYZ
+	:public Object
+{
+public:
+	RectangleYZ() = delete;
+	RectangleYZ(float y0, float y1, float z0, float z1, float k, std::shared_ptr<Material> material_info)
+		:y0{ y0 }, y1{ y1 }, z0{ z0 }, z1{ z1 }, k{ k }, Object{ material_info } {};
+
+	virtual bool intersectionTest(Ray& ray, float t_min, float t_max);
+	virtual bool bindAABB(AABB* aabb);
+private:
+	float y0, y1, z0, z1;
+	float k;
+};
+
+//class ConstantMedium
+//	:public Object
+//{
+//public:
+//	ConstantMedium(std::shared_ptr<Bounding> bounding, float dist, std::shared_ptr <Texture> texture)
+//		:bounding{ bounding }, dist{ dist }, texture{ texture } {};
+//
+//private:
+//	std::shared_ptr <Bounding> bounding;
+//	float dist;
+//	std::shared_ptr<Texture> texture
+//};

@@ -30,7 +30,7 @@ void Camera::shoot(float rr_prob)
 					glm::vec3 randomRadius = random_in_unit_disk();
 					glm::vec3 offset = this->right * randomRadius.x + this->cameraUp * randomRadius.y;
 					ray = Ray(origin + offset, start_point + offset_x * horizontal + offset_y * vertical - origin - offset);
-				}
+				}		
 				color += calculateColor(ray, 0);
 
 				curSamplingNum++;
@@ -42,7 +42,7 @@ void Camera::shoot(float rr_prob)
 				}
 			}
 			color /= static_cast<float>(this->msaa_times);
-			
+			if (this->tone_mapping) toneMapping(color);
 			gamma_correction(color);
 			this->write(_height - (row + 1), col, color);
 		}
@@ -67,7 +67,7 @@ void Camera::setView(glm::vec3 position, glm::vec3 lookAt, glm::vec3 worldUp, fl
 	this->rayDir = glm::normalize(position - lookAt);
 	this->right = glm::normalize(glm::cross(worldUp, rayDir));
 	this->cameraUp = cross(rayDir, right);
-	this->start_point = glm::vec3(-half_width, -half_height, -1.0f);
+	//this->start_point = glm::vec3(-half_width, -half_height, -1.0f);
 	this->start_point = this->origin - half_width * focus_dist * right - half_height * focus_dist * cameraUp - focus_dist * rayDir;
 	this->horizontal = 2 * half_width * focus_dist * right;
 	this->vertical = 2 * half_height * focus_dist * cameraUp;
@@ -82,18 +82,20 @@ glm::vec3 Camera::calculateColor(Ray& ray, unsigned int iter_depth)
 
 		for (auto& object : this->scene)
 		{
-			intersected |= object->intersectionTest(ray, 0.0f, std::numeric_limits<float>::max());
+			intersected |= object->intersectionTest(ray, this->plane_near, this->plane_far);
 		}
 		if (intersected)
 		{
-			if (russianRoulette() > this->rr_prob) return glm::vec3{ 0,0,0 };
+			auto emit = ray.hitInfo().hit_object_material.lock()->emitted(ray.hitInfo().hit_point_uv[0], ray.hitInfo().hit_point_uv[1], ray.hitInfo().hit_point);
+			if (russianRoulette() > this->rr_prob) return emit;
 			//return (ray.hitInfo().hit_point_normal + 1.0f) * 0.5f;//object->color; // Visualize Normal
 			glm::vec3 attenuation;
 			Ray ray_scattered{};
 			if (ray.hitInfo().hit_object_material.lock()->scatter(ray, ray_scattered, attenuation))
 			{
-				return attenuation * calculateColor(ray_scattered, iter_depth + 1) / this->rr_prob;
+				return emit + attenuation * calculateColor(ray_scattered, iter_depth + 1) / this->rr_prob;
 			}
+			else return emit;
 		}
 	}
 	else // BVH on
@@ -101,54 +103,85 @@ glm::vec3 Camera::calculateColor(Ray& ray, unsigned int iter_depth)
 		auto* box = this->bvh->root.get();
 		if (box->isLeave())
 		{
-			if (box->bounding->host->intersectionTest(ray, 0.0f, std::numeric_limits<float>::max()))
+			if (box->bounding->host->intersectionTest(ray, this->plane_near, this->plane_far))
 			{
-				if (russianRoulette() > this->rr_prob) return glm::vec3{ 0,0,0 };
+				auto emit = ray.hitInfo().hit_object_material.lock()->emitted(ray.hitInfo().hit_point_uv[0], ray.hitInfo().hit_point_uv[1], ray.hitInfo().hit_point);
+				if (russianRoulette() > this->rr_prob) return emit;
+
 				glm::vec3 attenuation;
 				Ray ray_scattered{};
+				
 				if (ray.hitInfo().hit_object_material.lock()->scatter(ray, ray_scattered, attenuation))
 				{
-					return attenuation * calculateColor(ray_scattered, iter_depth + 1) / this->rr_prob;
+					return emit + attenuation * calculateColor(ray_scattered, iter_depth + 1) / this->rr_prob;
 				}
+				else return emit;
 			}	
 		}
 		else  
 		{
-			if (box->bounding->intersectionTest(ray, 0.0f, std::numeric_limits<float>::max()))
+			if (box->bounding->intersectionTest(ray, this->plane_near, this->plane_far))
 			{
 				bool hasIntersected = traverseBVH(ray, box->left) | traverseBVH(ray, box->right);
 
 				if (hasIntersected)
 				{
-					if (russianRoulette() > this->rr_prob) return glm::vec3{ 0,0,0 };
+					auto emit = ray.hitInfo().hit_object_material.lock()->emitted(ray.hitInfo().hit_point_uv[0], ray.hitInfo().hit_point_uv[1], ray.hitInfo().hit_point);
+					if (russianRoulette() > this->rr_prob) return emit;
 					//ray.swapHitInfo((probeL.hitInfo().hit_time_first < probeR.hitInfo().hit_time_first ? probeL.hitInfo() : probeR.hitInfo()));
 
 					glm::vec3 attenuation;
 					Ray ray_scattered{};
+					
 					if (ray.hitInfo().hit_object_material.lock()->scatter(ray, ray_scattered, attenuation))
 					{
-						return attenuation * calculateColor(ray_scattered, iter_depth + 1) / this->rr_prob;
+						auto c = calculateColor(ray_scattered, iter_depth + 1) / this->rr_prob;
+						//if (glm::dot(c,c) != 0) std::cout << c.x << ' ' << c.y << ' ' << c.z << '\n';
+						auto r = attenuation * c;
+						//if (glm::dot(c, c) != 0 && glm::dot(r, r) == 0) std::cout << "??\n\n";
+						return emit + r;
 					}
+					else return emit;
 				}
 			}
 		}
 	}// end switch Mode
 
 	// Background (Light Source)
-	return { 1.0,1.0,1.0 };
-	glm::vec3 normalizedDir = glm::normalize(ray.direction());
-	float t = 0.5 * (normalizedDir.y + 1.0); // -1.0 <= range(y) <= 1.0
-	return (1.0f - t) * glm::vec3(1.0, 1.0, 1.0) + t * glm::vec3(0.5, 0.7, 1.0);
+	return environmentLight(ray);
+}
+
+glm::vec3 Camera::environmentLight(const Ray& ray) const
+{
+	switch (this->environment)
+	{
+	case Environment::nature:
+	{
+		glm::vec3 normalizedDir = glm::normalize(ray.direction());
+		float t = 0.5 * (normalizedDir.y + 1.0); // -1.0 <= range(y) <= 1.0
+		return (1.0f - t) * glm::vec3(1.0, 1.0, 1.0) + t * glm::vec3(0.5, 0.7, 1.0);
+	}
+	case Environment::darkness:
+	{
+		return { 0,0,0 };
+	}
+	case Environment::booming:
+	{
+		return { 1,1,1 };
+	}
+	default:
+		throw std::runtime_error("Did not assign the environment of Camera(type=class) !");
+	}
 }
 
 bool Camera::traverseBVH(Ray& ray, BVH::Node* box)
 {
 	if (!box) return false;
-	if (box->bounding->intersectionTest(ray, 0.0f, std::numeric_limits<float>::max())) // Hit
+	if (box->bounding->intersectionTest(ray, this->plane_near, this->plane_far)) // Hit
 	{
 		if (box->isLeave())
 		{
-			if (box->bounding->host->intersectionTest(ray, 0.0f, std::numeric_limits<float>::max())) return true;
+			if (box->bounding->host->intersectionTest(ray, this->plane_near, this->plane_far)) return true;
 			else return false;
 		}
 		else
@@ -159,7 +192,7 @@ bool Camera::traverseBVH(Ray& ray, BVH::Node* box)
 	return false;// Miss
 }
 
-void Camera::write(int row, int col, const glm::vec3& color)
+void Camera::write(int row, int col, glm::vec3& color)
 {
 	assert(_channels >= 3 && "The color channels less than three!");
 	assert((row >= 0 && row < _height&& col >= 0 && col < _width) && "Illegal position for writing!");
@@ -244,4 +277,48 @@ void Camera::save(std::string absPath)
 		}
 	}
 	fout.close();
+}
+
+void Camera::setHDR(ToneMapping tone_mapping)
+{
+	this->tone_mapping = tone_mapping;
+	std::cout << "HDR Mode>> ";
+	if (tone_mapping == ToneMapping::ACES) std::cout << "ACES\n";
+}
+
+void Camera::toneMapping(glm::vec3& color)
+{
+	switch (this->tone_mapping)
+	{
+	case ToneMapping::ACES:
+		{
+		//Krzysztof Narkowicz Approximation
+		color *= 0.6f;
+		color = glm::clamp((color * (2.51f * color + 0.03f)) / (color * (2.43f * color + 0.59f) + 0.14f), 0.0f, 1.0f);
+
+		//ERROR>>
+		//static glm::mat3x3 aces_input
+		//{
+		//		glm::vec3(0.59719f, 0.35458f, 0.04823f),
+		//		glm::vec3(0.07600f, 0.90834f, 0.01566f),
+		//		glm::vec3(0.02840f, 0.13383f, 0.83777f)
+		//};
+
+		//static glm::mat3x3 aces_output
+		//{
+		//	glm::vec3(1.60475f, -0.53108f, -0.07367f),
+		//	glm::vec3(-0.10208f,  1.10813f, -0.00605f),
+		//	glm::vec3(-0.00327f, -0.07276f,  1.07602f)
+		//};
+		//
+		//color = aces_input * color;
+
+		////rtt_and_odt_fit
+		//color = (color * (color + 0.0245786f) - 0.000090537f) / (color * (0.983729f * color + 0.4329510f) + 0.238081f);
+
+		//color = aces_output * color;
+		break;
+		}
+		default: throw std::runtime_error("Undefined Tone Mapping Mode!");
+	}
 }

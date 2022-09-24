@@ -17,7 +17,7 @@ class ConstantTexture
 	:public Texture
 {
 public:
-	ConstantTexture() = default;
+	ConstantTexture() = delete;
 	ConstantTexture(glm::vec3 color) : color{ color } {};
 
 	virtual glm::vec3 value(float u, float v, const glm::vec3& p) const { return this->color; }
