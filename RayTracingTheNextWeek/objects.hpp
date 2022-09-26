@@ -9,24 +9,20 @@
 #include "ray.hpp"
 #include "materials.hpp"
 #include "BVH.hpp"
+#include "utils.hpp"
 
 class AABB;
 class Object
 {
 public:
-	struct AddtionalInfo
-	{
-		bool flip_normal = false;
-	};
-public:
 	Object() = default;
-	Object(std::shared_ptr<Material> material_info, AddtionalInfo* additional_info = nullptr) : material{ material_info} {};
+	Object(std::shared_ptr<Material> material_info) : material{ material_info} {};
+	virtual ~Object() {};
 	virtual bool intersectionTest(Ray& ray, float t_min, float t_max) = 0;
 	virtual bool bindAABB(AABB* aabb) = 0;
 
 public:
 	std::shared_ptr<Material> material;
-	AddtionalInfo* additional_info;
 };
 
 class Sphere
@@ -105,15 +101,77 @@ private:
 	float k;
 };
 
-//class ConstantMedium
-//	:public Object
-//{
-//public:
-//	ConstantMedium(std::shared_ptr<Bounding> bounding, float dist, std::shared_ptr <Texture> texture)
-//		:bounding{ bounding }, dist{ dist }, texture{ texture } {};
-//
-//private:
-//	std::shared_ptr <Bounding> bounding;
-//	float dist;
-//	std::shared_ptr<Texture> texture
-//};
+// Proxy
+struct FlipNormal
+	:public Object
+{
+public:
+	FlipNormal() = delete;
+	FlipNormal(std::shared_ptr<Object> host) : host{ host } {};
+
+	virtual bool intersectionTest(Ray& ray, float t_min, float t_max);
+	virtual bool bindAABB(AABB* aabb);
+
+private:
+	std::shared_ptr<Object> host;
+};
+
+struct Translate
+	:public Object
+{
+public:
+	Translate() = delete;
+	Translate(glm::vec3 offset, std::shared_ptr<Object> host) : host{ host }, offset{ offset } {};
+	virtual bool intersectionTest(Ray& ray, float t_min, float t_max);
+	virtual bool bindAABB(AABB* aabb);
+
+private:
+	std::shared_ptr<Object> host;
+	glm::vec3 offset;
+};
+
+struct RotateY
+	:public Object
+{
+public:
+	RotateY() = delete;
+	RotateY(float angle, std::shared_ptr<Object> host);
+	virtual bool intersectionTest(Ray& ray, float t_min, float t_max);
+	virtual bool bindAABB(AABB* aabb);
+
+private:
+	std::shared_ptr<Object> host;
+	float radians;
+	float sin_theta;
+	float cos_theta;
+	bool hasBox;
+};
+
+class Box
+	:public Object
+{
+public:
+	Box() = delete;
+	Box(glm::vec3 p_min, glm::vec3 p_max, std::shared_ptr<Material> material_info);
+	virtual bool intersectionTest(Ray& ray, float t_min, float t_max);
+	virtual bool bindAABB(AABB* aabb);
+private:
+	glm::vec3 p_min;
+	glm::vec3 p_max;
+	std::vector<std::shared_ptr<Object>> faces;
+};
+
+class ConstantMedium
+	:public Object
+{
+public:
+	ConstantMedium() = delete;
+	ConstantMedium(float density, std::shared_ptr<Texture> medium_info, std::shared_ptr <Object> host)
+		:Object{ std::make_shared<Isotropic>(medium_info) }, density{ density }, host{ host } {};
+
+	virtual bool intersectionTest(Ray& ray, float t_min, float t_max);
+	virtual bool bindAABB(AABB* aabb);
+private:
+	std::shared_ptr <Object> host;
+	float density;
+};

@@ -28,6 +28,19 @@ private:
 	std::unique_ptr<std::uniform_real_distribution<float>> uniDis;
 };
 
+class UniformIntegerRandomer
+{
+public:
+	UniformIntegerRandomer(int lower, int upper)
+		:e((std::chrono::high_resolution_clock::now() - TIME_START).count())
+		, uniDis{ std::make_unique< std::uniform_int_distribution<int> >(lower, upper) } {};
+
+	float operator() (void) { return (*(this->uniDis))(this->e); }
+private:
+	std::default_random_engine e;
+	std::unique_ptr<std::uniform_int_distribution<int>> uniDis;
+};
+
 static auto randfMOneToOne = UniformFloatRandomer(-1.0, 1.0);
 
 glm::vec3 random_in_unit_sphere();

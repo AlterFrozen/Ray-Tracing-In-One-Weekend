@@ -1,5 +1,12 @@
-# Ray Tracing In One Weekend
+# Ray Tracing In One Weekend Series
 
-![](./RayTracingInOneWeekend/result.png)
+- Refer to the  **Ray Tracing In One Weekend Series** books but reconstruct the code and rewrite some functions by myself.
 
-- Refer to the book **Ray Tracing In One Weekend** but reconstruct the code and rewrite some functions by myself.
+## Ray Tracing In One Weekend
+
+![](./screenshots/RayTracingInOneWeekend.png)
+
+## Ray Tracing The Next Week
+
+![](./screenshots/RayTracingTheNextWeekA.png)
+![](./screenshots/RayTracingTheNextWeekB.png)

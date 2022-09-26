@@ -17,7 +17,7 @@
 
 typedef enum { ppm } PictureFormats;
 typedef enum { R, G, B, A } ColorChannels;
-typedef enum { nature, darkness, booming } Environment;
+typedef enum { nature, darkness, bright, booming } Environment;
 typedef enum { OFF, ACES } ToneMapping;
 
 class Camera
@@ -65,7 +65,6 @@ public: // Interfaces
 private:
 	glm::vec3 calculateColor(Ray& ray, unsigned int iter_depth);
 
-	bool traverseBVH(Ray& ray, BVH::Node* box);
 	glm::vec3 environmentLight(const Ray& ray) const;
 	void toneMapping(glm::vec3& color);
 
@@ -83,7 +82,7 @@ private:
 	uint32_t msaa_times = 1;
 	float aperture_radius = -1.0;
 	float focus_dist = 1.0f;
-	float plane_near = 0.01f;
+	float plane_near = 0.001f;
 	float plane_far = std::numeric_limits<float>::max();
 	//Sampler Range
 	float rr_prob;

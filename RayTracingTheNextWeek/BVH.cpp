@@ -59,10 +59,9 @@ BVH::Node::Node(BVH& tree, size_t vergeL, size_t vergeR)
 	//else if (n == 2)
 	else
 	{
-		static std::default_random_engine e;
-		static std::uniform_int_distribution uniDis(0, 2); //[x,y,z]
+		static auto uniIntZeroToTwo = UniformIntegerRandomer(0, 2); //[x, y, z]
 
-		int axis = uniDis(e);
+		int axis = uniIntZeroToTwo();
 		//std::cout << "Axis:: " << char(axis + 'x') << ' ' << vergeL << ' ' << vergeR << std::endl;
 		sort(tree.data.begin() + vergeL, tree.data.begin() + vergeL, 
 			[axis](const std::shared_ptr<Object>& objA, const std::shared_ptr<Object>& objB)->bool
@@ -89,10 +88,12 @@ bool BVH::Node::intersectionTest(Ray& ray, float t_min, float t_max) const
 {
 	if (this->bounding->intersectionTest(ray, t_min, t_max))
 	{
+		if (isLeave()) return this->bounding->host->intersectionTest(ray, t_min, t_max);
+
 		Ray::HitInfo leftInfo{};
-		bool hitLeft = this->left ? this->left->bounding->intersectionTest(ray, t_min, t_max) : false;
+		bool hitLeft = this->left ? this->left->intersectionTest(ray, t_min, t_max) : false;
 		ray.swapHitInfo(leftInfo);
-		bool hitRight = this->right ? this->right->bounding->intersectionTest(ray, t_min, t_max) : false;
+		bool hitRight = this->right ? this->right->intersectionTest(ray, t_min, t_max) : false;
 		if (hitLeft && hitRight)
 		{
 			if (leftInfo.hit_time_first < ray.hitInfo().hit_time_first) ray.swapHitInfo(leftInfo);

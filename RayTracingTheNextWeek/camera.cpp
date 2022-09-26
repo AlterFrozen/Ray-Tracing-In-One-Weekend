@@ -6,6 +6,12 @@ void Camera::shoot(float rr_prob)
 	this->rr_recursion_upper = static_cast<unsigned int>(std::ceil(std::log(0.001) / std::log(rr_prob)));
 
 	long long totalSamplingNum = _height * _width * msaa_times / 100;
+
+	if (this->environment == Environment::nature ) std::cout << "Environment>> Nature\n";
+	else if (this->environment == Environment::darkness) std::cout << "Environment>> Darkness{0,0,0}\n";
+	else if (this->environment == Environment::bright)  std::cout << "Environment>> Bright{1,1,1}\n";
+	else if (this->environment == Environment::booming)  std::cout << "Environment>> Booming{10,10,10}, please make sure that the HDR is openning!\n";
+
 	std::cout << "Total Sampling>> " << totalSamplingNum  * 100 << '\n';
 	long long curSamplingNum = 0;
 	long long curProgression = 0;
@@ -35,7 +41,7 @@ void Camera::shoot(float rr_prob)
 
 				curSamplingNum++;
 				curProgression = curSamplingNum / totalSamplingNum;
-				if (curProgression - totalProgression >= 10)
+				if (curProgression - totalProgression >= 1)
 				{
 					totalProgression = curProgression;
 					std::cout << "Progressing>> " << totalProgression << std::endl;
@@ -101,49 +107,19 @@ glm::vec3 Camera::calculateColor(Ray& ray, unsigned int iter_depth)
 	else // BVH on
 	{
 		auto* box = this->bvh->root.get();
-		if (box->isLeave())
+		if (box->intersectionTest(ray, this->plane_near, this->plane_far))
 		{
-			if (box->bounding->host->intersectionTest(ray, this->plane_near, this->plane_far))
+			auto emit = ray.hitInfo().hit_object_material.lock()->emitted(ray.hitInfo().hit_point_uv[0], ray.hitInfo().hit_point_uv[1], ray.hitInfo().hit_point);
+			if (russianRoulette() > this->rr_prob) return emit;
+
+			glm::vec3 attenuation;
+			Ray ray_scattered{};
+
+			if (ray.hitInfo().hit_object_material.lock()->scatter(ray, ray_scattered, attenuation))
 			{
-				auto emit = ray.hitInfo().hit_object_material.lock()->emitted(ray.hitInfo().hit_point_uv[0], ray.hitInfo().hit_point_uv[1], ray.hitInfo().hit_point);
-				if (russianRoulette() > this->rr_prob) return emit;
-
-				glm::vec3 attenuation;
-				Ray ray_scattered{};
-				
-				if (ray.hitInfo().hit_object_material.lock()->scatter(ray, ray_scattered, attenuation))
-				{
-					return emit + attenuation * calculateColor(ray_scattered, iter_depth + 1) / this->rr_prob;
-				}
-				else return emit;
-			}	
-		}
-		else  
-		{
-			if (box->bounding->intersectionTest(ray, this->plane_near, this->plane_far))
-			{
-				bool hasIntersected = traverseBVH(ray, box->left) | traverseBVH(ray, box->right);
-
-				if (hasIntersected)
-				{
-					auto emit = ray.hitInfo().hit_object_material.lock()->emitted(ray.hitInfo().hit_point_uv[0], ray.hitInfo().hit_point_uv[1], ray.hitInfo().hit_point);
-					if (russianRoulette() > this->rr_prob) return emit;
-					//ray.swapHitInfo((probeL.hitInfo().hit_time_first < probeR.hitInfo().hit_time_first ? probeL.hitInfo() : probeR.hitInfo()));
-
-					glm::vec3 attenuation;
-					Ray ray_scattered{};
-					
-					if (ray.hitInfo().hit_object_material.lock()->scatter(ray, ray_scattered, attenuation))
-					{
-						auto c = calculateColor(ray_scattered, iter_depth + 1) / this->rr_prob;
-						//if (glm::dot(c,c) != 0) std::cout << c.x << ' ' << c.y << ' ' << c.z << '\n';
-						auto r = attenuation * c;
-						//if (glm::dot(c, c) != 0 && glm::dot(r, r) == 0) std::cout << "??\n\n";
-						return emit + r;
-					}
-					else return emit;
-				}
+				return emit + attenuation * calculateColor(ray_scattered, iter_depth + 1) / this->rr_prob;
 			}
+			else return emit;
 		}
 	}// end switch Mode
 
@@ -165,31 +141,17 @@ glm::vec3 Camera::environmentLight(const Ray& ray) const
 	{
 		return { 0,0,0 };
 	}
-	case Environment::booming:
+	case Environment::bright:
 	{
 		return { 1,1,1 };
+	}
+	case Environment::booming:
+	{
+		return { 10,10,10 };
 	}
 	default:
 		throw std::runtime_error("Did not assign the environment of Camera(type=class) !");
 	}
-}
-
-bool Camera::traverseBVH(Ray& ray, BVH::Node* box)
-{
-	if (!box) return false;
-	if (box->bounding->intersectionTest(ray, this->plane_near, this->plane_far)) // Hit
-	{
-		if (box->isLeave())
-		{
-			if (box->bounding->host->intersectionTest(ray, this->plane_near, this->plane_far)) return true;
-			else return false;
-		}
-		else
-		{
-			return traverseBVH(ray, box->left) | traverseBVH(ray, box->right);
-		}
-	}
-	return false;// Miss
 }
 
 void Camera::write(int row, int col, glm::vec3& color)

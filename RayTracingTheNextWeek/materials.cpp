@@ -56,3 +56,11 @@ bool Dielectric::scatter(Ray& ray_in, Ray& ray_scatter, glm::vec3& attenuation) 
 
 	return true; // continue since the reflection is random now
 }
+
+bool Isotropic::scatter(Ray& ray_in, Ray& ray_scatter, glm::vec3& attenuation) const
+{
+	ray_scatter = Ray(ray_in.hitInfo().hit_point, random_in_unit_sphere());
+	//ray_scatter.hitInfo().hit_time_first = ray_in.hitInfo().hit_time_first;
+	attenuation = this->emit->value(ray_in.hitInfo().hit_point_uv[0], ray_in.hitInfo().hit_point_uv[1], ray_in.hitInfo().hit_point);
+	return true;
+}
